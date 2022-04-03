@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>water tank problem</title>
+    <style>
+        #error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <label for="userinput">Please Enter value by comma separate:</label>
+    <input type="text" name="userinput" id="userinput" onchange="userInput(this.value)" value="0,4,0,0,0,6,0,6,4,0">
+    <div id="error"></div>
+    <div class="input">
+        <h1>Input</h1>
+        <h2 id="uservalue">[0,4,0,0,0,6,0,6,4,0]</h2>
+        <svg id="inputsvg" viewbox="0 0 100 35" style="border: 1px solid #000000;">
+
+        </svg>
+
+    </div>
+
+
+    <br>
+    <div id="output">
+        <h1>output</h1>
+        <h2 id="unit"></h2>
+
+        <svg id="outputsvg" viewbox="0 0 100 35" style="border: 1px solid #000000;">
+
+        </svg>
+
+    </div>
+
+    <script>
+
+        function userInput(str) {
+
+            let input = str.split(",");
+
+            let filtervalue = input.filter((value) => value < 0 || value == "" || isNaN(value));
+
+            var errmsg = "";
+            //check user input. it is valid
+            if (filtervalue.length > 0) {
+                errmsg = "Please Enter Valid Value";
+            } else {
+                buildSvgImg(input)
+            }
+
+            document.getElementById("error").innerHTML = errmsg;
+            document.getElementById("uservalue").innerHTML = "[" + str + "]";
+
+        }
+
+        function buildSvgImg(inputarr) {
+
+            const maxHeight = Math.max(...inputarr);
+            const container = [];
+            const totalcolumn = inputarr.length;
+            
+            var blockInfo = { isWall: false, isWaterContainer: false, block: 0 };
+            
+            inputarr.forEach((element, index) => {
+            
+                if (element > 0) {
+                    container[index] = { ...blockInfo, isWall: true, block: element, isWaterContainer: false };
+                    blockInfo = findMaxWaterFilling(inputarr, index);
+                } else {
+                    container[index] = { ...blockInfo };
+                }
+            });
+
+
+
+            //viewbox setting for svg
+            let viewBoxSetting = `0 0 ${totalcolumn * 10} ${maxHeight * 5 + 5}`;
+           
+            const inputsvg = document.getElementById("inputsvg");
+            inputsvg.setAttributeNS(null, 'viewBox', viewBoxSetting);
+
+
+            var outputsvg = document.getElementById("outputsvg");
+            outputsvg.setAttributeNS(null, 'viewBox', viewBoxSetting);
+
+
+            for (let i = 0; i < totalcolumn; i++) {
+                for (var j = 0; j <= maxHeight; j++) {
+
+                    bg = "rgb(255,255,255)";
+                    if (container[i]?.isWaterContainer && maxHeight - container[i]?.block < j) {
+                        bg = "rgb(0,191,255)";
+                    }
+
+
+                    if (container[i]?.isWall && maxHeight - container[i]?.block < j) {
+                        bg = "rgb(255,255,0)";
+                    }
+
+
+
+                    const rectelement = document.createElementNS(
+                        'http://www.w3.org/2000/svg',
+                        'rect'
+                    );
+
+                    rectelement.setAttributeNS(null, 'style', `fill:${bg};stroke-width:0.1;stroke:rgb(0,0,0)`);
+                    rectelement.setAttributeNS(null, 'width', 10);
+                    rectelement.setAttributeNS(null, 'height', 5);
+                    rectelement.setAttributeNS(null, 'x', i * 10);
+                    rectelement.setAttributeNS(null, 'y', j * 5);
+
+                    inputsvg.appendChild(rectelement);
+
+                    //clone reactelement change color of wall.
+                    let newclone = rectelement.cloneNode(true);
+
+                    if (container[i]?.isWall && maxHeight - container[i]?.block < j) {
+                        bg = "rgb(255,255,255)";
+                    }
+
+                    newclone.setAttributeNS(null, 'style', `fill:${bg};stroke-width:0.1;stroke:rgb(0,0,0)`)
+
+                    outputsvg.appendChild(newclone);
+                }
+            }
+
+
+
+            //find total unit of output container
+            var waterContainer = container.filter((value) => value.isWaterContainer);
+
+            const initialValue = 0;
+            const totalunit = waterContainer.reduce(
+                (previousValue, currentValue) => previousValue + currentValue.block,
+                initialValue
+            );
+
+            document.getElementById("unit").innerHTML = totalunit + " unit";
+        }
+
+
+
+
+        function findMaxWaterFilling(arr, index) {
+            height = arr[index];
+            for (i = index + 1; i < arr.length; i++) {
+                if (arr[i] > 0) {
+                    return { isWaterContainer: true, block: Math.min(arr[i], height) }
+                    break;
+                }
+
+            }
+            return { isWall: false, isWaterContainer: false, block: 0 };
+        }
+
+
+        //initialize svg by defualt input
+
+        var userinput = document.getElementById("userinput").value;
+
+        userInput(userinput);
+
+
+
+
+    </script>
+</body>
+
+</html>
